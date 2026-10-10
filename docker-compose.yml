@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bulk_actions
+      POSTGRES_USER: bulk
+      POSTGRES_PASSWORD: bulk
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bulk -d bulk_actions"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://bulk:bulk@db:5432/bulk_actions
+      BATCH_SIZE: ${BATCH_SIZE:-500}
+      SELECTION_PAGE_SIZE: ${SELECTION_PAGE_SIZE:-1000}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-1}
+      LEASE_SECONDS: ${LEASE_SECONDS:-120}
+      MAX_BATCH_ATTEMPTS: ${MAX_BATCH_ATTEMPTS:-5}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["python", "-m", "app.worker"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://bulk:bulk@db:5432/bulk_actions
+      BATCH_SIZE: ${BATCH_SIZE:-500}
+      SELECTION_PAGE_SIZE: ${SELECTION_PAGE_SIZE:-1000}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-1}
+      LEASE_SECONDS: ${LEASE_SECONDS:-120}
+      MAX_BATCH_ATTEMPTS: ${MAX_BATCH_ATTEMPTS:-5}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

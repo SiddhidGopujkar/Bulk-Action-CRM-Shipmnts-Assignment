@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.db*
+*.sqlite*
+worker-logs/
+.pg-temp/
+.coverage
+htmlcov/
+build/
+dist/
+Bulk Action Platform - Shipmnts Technical Assignment (1).pdf

@@ -1,0 +1,311 @@
+{
+  "info": {
+    "_postman_id": "f3de8c62-8cc2-4a47-9d6d-4e186a385a3a",
+    "name": "Shipmnts Bulk Action Platform API",
+    "description": "Complete collection for system health, accounts, contacts, dashboard worker controls, bulk action scheduling, processing inspection, and retries. Worker control is available only when ENABLE_LOCAL_WORKER_CONTROL=true.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts and contacts",
+      "item": [
+        {
+          "name": "Create account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/accounts",
+            "description": "Creates the account used by contact and action requests. Sets accountId from the response.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{accountId}}\",\n  \"name\": \"Demo Account\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.collectionVariables.set('accountId', body.id);",
+                  "pm.test('Account created', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/accounts"
+          }
+        },
+        {
+          "name": "Account overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/accounts/overview",
+            "description": "Account contact totals and current per-minute rate usage."
+          }
+        },
+        {
+          "name": "Add contacts to account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/accounts/{{accountId}}/contacts",
+            "description": "Bulk add up to 5,000 contacts per request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contacts\": [\n    {\n      \"name\": \"Avery Stone\",\n      \"email\": \"avery.stone@example.test\",\n      \"age\": 32,\n      \"status\": \"active\"\n    },\n    {\n      \"name\": \"Jordan Lee\",\n      \"email\": \"jordan.lee@example.test\",\n      \"age\": 27,\n      \"status\": \"active\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List account contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/accounts/{{accountId}}/contacts?limit=100&offset=0"
+          }
+        },
+        {
+          "name": "Get account rate limit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/accounts/{{accountId}}/rate-limit"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard and workers",
+      "item": [
+        {
+          "name": "Dashboard state",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/dashboard?accountId={{accountId}}"
+          }
+        },
+        {
+          "name": "Get local worker pool",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/workers"
+          }
+        },
+        {
+          "name": "Scale local worker pool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/workers/scale",
+            "description": "Requires ENABLE_LOCAL_WORKER_CONTROL=true in .env and an API restart. This controls local demo workers.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"count\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk actions",
+      "item": [
+        {
+          "name": "List bulk actions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions?limit=50&offset=0"
+          }
+        },
+        {
+          "name": "Create contact update action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/bulk-actions",
+            "description": "Response actionId is saved to the collection variable for the follow-up requests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"entity\": \"contact\",\n  \"action\": \"update\",\n  \"filter\": {\n    \"status\": \"active\"\n  },\n  \"operationData\": {\n    \"status\": \"inactive\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.actionId) pm.collectionVariables.set('actionId', body.actionId);",
+                  "pm.test('Action accepted', function () { pm.response.to.have.status(202); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create scheduled contact update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/bulk-actions",
+            "description": "scheduledAt must be an ISO-8601 timestamp with an explicit timezone. Use a future date.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"entity\": \"contact\",\n  \"action\": \"update\",\n  \"filter\": {\n    \"status\": \"active\"\n  },\n  \"operationData\": {\n    \"status\": \"inactive\"\n  },\n  \"scheduledAt\": \"2030-11-22T23:15:00+05:30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get action status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions/{{actionId}}"
+          }
+        },
+        {
+          "name": "Get action statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions/{{actionId}}/stats"
+          }
+        },
+        {
+          "name": "List action batches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions/{{actionId}}/batches?limit=100&offset=0"
+          }
+        },
+        {
+          "name": "List queued entity records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions/{{actionId}}/queue?limit=100"
+          }
+        },
+        {
+          "name": "List all entity logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions/{{actionId}}/logs?limit=100&offset=0"
+          }
+        },
+        {
+          "name": "List failed entity logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions/{{actionId}}/logs?status=FAILED&limit=100&offset=0"
+          }
+        },
+        {
+          "name": "Retry failed or incomplete work",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/bulk-actions/{{actionId}}/retry"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "accountId",
+      "value": "A001"
+    },
+    {
+      "key": "actionId",
+      "value": ""
+    }
+  ]
+}

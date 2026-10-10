@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Shipmnts · Bulk Action Monitor</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/queue.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/"><span class="brand-mark">S</span><span>shipmnts<span class="brand-sub">BULK ACTION MONITOR</span></span></a><div class="live"><i></i> LIVE <span id="last-updated">Connecting…</span></div></header>
+  <main>
+    <section class="heading"><div><div class="eyebrow">OPERATIONS / WORK QUEUE</div><h1>Bulk action monitor</h1><p>Watch selected CRM records move through durable batches and worker processes.</p></div><button id="refresh" class="button secondary">↻ Refresh</button></section>
+    <div id="notice" class="notice"></div>
+    <section class="panel accounts-panel">
+      <div class="panel-title"><div><h2>Accounts and rate limits</h2><p>Usage is shared across all workers and bulk actions for that account; counters reset each UTC minute.</p></div>
+        <form id="account-form" class="account-form"><input id="new-account-id" placeholder="Account ID" required maxlength="100"><input id="new-account-name" placeholder="Account name" required maxlength="200"><button class="button primary" type="submit">＋ Add account</button></form>
+      </div>
+      <div class="table-wrap"><table class="accounts-table"><thead><tr><th>ACCOUNT</th><th>CONTACTS</th><th>EVENTS THIS MINUTE</th><th>REMAINING</th><th></th></tr></thead><tbody id="account-rows"><tr><td colspan="5" class="empty">Loading accounts…</td></tr></tbody></table></div>
+    </section>
+    <section class="metrics">
+      <article class="metric"><div class="metric-label">SOURCE RECORDS <span class="dot blue"></span></div><strong id="source-count">—</strong><small>Contacts in selected account</small></article>
+      <article class="metric"><div class="metric-label">COMPLETED <span class="dot green"></span></div><strong id="completed-count">—</strong><small id="completed-percent">—% of selected</small></article>
+      <article class="metric"><div class="metric-label">IN PROGRESS <span class="dot amber"></span></div><strong id="progress-count">—</strong><small id="progress-percent">—% of selected</small></article>
+      <article class="metric"><div class="metric-label">PENDING <span class="dot gray"></span></div><strong id="pending-count">—</strong><small id="pending-percent">—% of selected</small></article>
+      <article class="metric"><div class="metric-label">AVG THROUGHPUT <span class="dot blue"></span></div><strong id="throughput">—</strong><small id="elapsed-time">Records per second</small></article>
+    </section>
+    <section class="layout">
+      <div class="panel overview">
+        <div class="panel-title"><div><h2>Processing overview</h2><p id="selected-action-label">Select an action to inspect live progress</p></div><select id="action-select" aria-label="Select action"><option value="">No actions yet</option></select></div>
+        <div class="progress-head"><span>RECORD COMPLETION</span><strong id="overall-progress">0%</strong></div>
+        <div class="progress-track"><span id="seg-done"></span><span id="seg-running"></span><span id="seg-waiting"></span></div>
+        <div class="legend"><span><i class="dot green"></i> Completed</span><span><i class="dot amber"></i> In progress</span><span><i class="dot gray"></i> Pending</span><span class="push" id="staged-count">0 staged</span></div>
+        <div class="flow-title"><div><h3>Batch flow</h3><span>Persisted batch assignments, newest first</span></div><span class="pill" id="queue-summary">Queue · —</span></div>
+        <div class="table-wrap"><table><thead><tr><th>BATCH</th><th>RECORDS</th><th>STATE</th><th>WORKER</th><th>RESULTS</th></tr></thead><tbody id="batch-rows"><tr><td colspan="5" class="empty">Choose or create an action to see batches.</td></tr></tbody></table></div>
+        <button id="toggle-queue" class="queue-toggle" type="button">＋ Show pending record IDs</button>
+        <div id="queue-records" class="table-wrap queue-records hidden"><table><thead><tr><th>ENTITY ID</th><th>BATCH</th><th>STATE</th><th>WORKER</th></tr></thead><tbody id="queue-rows"><tr><td colspan="4" class="empty">No pending staged records.</td></tr></tbody></table><div class="queue-foot">Showing up to 100 staged pending records. Unstaged matches are included in the pending count above.</div></div>
+      </div>
+      <aside class="side">
+        <section class="panel"><div class="panel-title"><div><h2>Worker pool</h2><p id="worker-note">Checking worker configuration…</p></div><span class="pool-icon">⌘</span></div>
+          <div class="worker-count"><strong id="worker-count">—</strong><span>managed processes</span></div>
+          <div id="worker-list" class="worker-list"></div>
+          <div class="scale-control"><div><label for="worker-range">Desired workers</label><output id="worker-output">1</output></div><input id="worker-range" type="range" min="1" max="8" value="1"><button id="scale-button" class="button primary full">Apply worker count</button><small>Scaling control is for local demos. Multiple workers require PostgreSQL.</small></div>
+        </section>
+        <section class="panel create-panel"><h2>Start an action</h2><p>Updates matching contacts in the selected account.</p><form id="action-form"><label>Account<select id="account-id" required><option value="">Select an account</option></select></label><label>Match contact status<select id="filter-status"><option value="active">active</option><option value="inactive">inactive</option></select></label><label>Set matching records to<select id="update-status"><option value="inactive">inactive</option><option value="active">active</option></select></label><button class="button primary full" type="submit">Create bulk action <span>→</span></button></form></section>
+      </aside>
+    </section>
+    <footer>Live values are read from database records. The queue shown here is the persisted batch table; Redis is not configured in this project. <a href="/docs">API docs ↗</a></footer>
+  </main>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
